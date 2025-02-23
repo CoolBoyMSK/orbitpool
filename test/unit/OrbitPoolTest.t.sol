@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import { Test, console } from "forge-std/Test.sol";
-import { TSwapPool } from "../../src/PoolFactory.sol";
+import { Test } from "forge-std/Test.sol";
+import { OrbitPool } from "../../src/OrbitPool.sol";
 import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
-contract TSwapPoolTest is Test {
-    TSwapPool pool;
+contract OrbitPoolTest is Test {
+    OrbitPool pool;
     ERC20Mock poolToken;
     ERC20Mock weth;
 
@@ -17,7 +16,7 @@ contract TSwapPoolTest is Test {
     function setUp() public {
         poolToken = new ERC20Mock();
         weth = new ERC20Mock();
-        pool = new TSwapPool(address(poolToken), address(weth), "LTokenA", "LA");
+        pool = new OrbitPool(address(poolToken), address(weth), "LTokenA", "LA");
 
         weth.mint(liquidityProvider, 200e18);
         poolToken.mint(liquidityProvider, 200e18);
@@ -90,5 +89,23 @@ contract TSwapPoolTest is Test {
         pool.withdraw(100e18, 90e18, 100e18, uint64(block.timestamp));
         assertEq(pool.totalSupply(), 0);
         assert(weth.balanceOf(liquidityProvider) + poolToken.balanceOf(liquidityProvider) > 400e18);
+    }
+
+    function testQuoteHelpersAndReserves() public {
+        vm.startPrank(liquidityProvider);
+        weth.approve(address(pool), 100e18);
+        poolToken.approve(address(pool), 100e18);
+        pool.deposit(100e18, 100e18, 100e18, uint64(block.timestamp));
+        vm.stopPrank();
+
+        (uint256 poolTokenReserve, uint256 wethReserve) = pool.getReserves();
+        assertEq(poolTokenReserve, 100e18);
+        assertEq(wethReserve, 100e18);
+
+        uint256 exactInputQuote = pool.quoteExactInput(poolToken, 10e18, weth);
+        uint256 exactOutputInputNeeded = pool.quoteExactOutput(poolToken, weth, 5e18);
+
+        assertGt(exactInputQuote, 0);
+        assertGt(exactOutputInputNeeded, 0);
     }
 }
