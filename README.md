@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="./images/orbitpool-youtube-dimensions.png" width="420" alt="OrbitPool" />
-</p>
-
 # OrbitPool
 
 OrbitPool is a lightweight AMM protocol for ERC20/WETH swaps.
