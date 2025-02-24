@@ -47,8 +47,11 @@ contract OrbitPool is ERC20 {
     IERC20 private immutable i_wethToken;
     IERC20 private immutable i_poolToken;
     uint256 private constant MINIMUM_WETH_LIQUIDITY = 1_000_000_000;
-    uint256 private swap_count = 0;
-    uint256 private constant SWAP_COUNT_MAX = 10;
+    uint256 private constant SWAP_MILESTONE = 10;
+
+    // Per-user swap counters — used for milestone tracking only (no reserve impact)
+    mapping(address => uint256) private s_userSwapCount;
+    uint256 public s_totalSwapCount;
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -70,6 +73,7 @@ contract OrbitPool is ERC20 {
         IERC20 tokenOut,
         uint256 amountTokenOut
     );
+    event MilestoneReached(address indexed swapper, uint256 totalSwapsForUser);
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
@@ -407,10 +411,10 @@ contract OrbitPool is ERC20 {
             revert OrbitPool__InvalidToken();
         }
 
-        swap_count++;
-        if (swap_count >= SWAP_COUNT_MAX) {
-            swap_count = 0;
-            outputToken.safeTransfer(msg.sender, 1_000_000_000_000_000_000);
+        s_totalSwapCount++;
+        s_userSwapCount[msg.sender]++;
+        if (s_userSwapCount[msg.sender] % SWAP_MILESTONE == 0) {
+            emit MilestoneReached(msg.sender, s_userSwapCount[msg.sender]);
         }
         emit Swap(
             msg.sender,
@@ -517,6 +521,10 @@ contract OrbitPool is ERC20 {
 
     function getMinimumWethDepositAmount() external pure returns (uint256) {
         return MINIMUM_WETH_LIQUIDITY;
+    }
+
+    function getUserSwapCount(address user) external view returns (uint256) {
+        return s_userSwapCount[user];
     }
 
     function getPriceOfOneWethInPoolTokens() external view returns (uint256) {
