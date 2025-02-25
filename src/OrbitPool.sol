@@ -373,20 +373,18 @@ contract OrbitPool is ERC20 {
     }
 
     /**
-     * @notice wrapper function to facilitate users selling pool tokens in exchange of WETH
-     * @param poolTokenAmount amount of pool tokens to sell
-     * @return wethAmount amount of WETH received by caller
+     * @notice Sells an exact amount of pool tokens in exchange for WETH.
+     * @param poolTokenAmount Exact amount of pool tokens to sell (input).
+     * @param minWethToReceive Minimum WETH the caller is willing to accept (slippage guard).
+     * @param deadline Transaction deadline; reverts if block.timestamp exceeds it.
+     * @return wethAmount Amount of WETH received by caller.
      */
     function sellPoolTokens(
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 minWethToReceive,
+        uint64 deadline
     ) external returns (uint256 wethAmount) {
-        return
-            swapExactOutput(
-                i_poolToken,
-                i_wethToken,
-                poolTokenAmount,
-                uint64(block.timestamp)
-            );
+        return swapExactInput(i_poolToken, poolTokenAmount, i_wethToken, minWethToReceive, deadline);
     }
 
     /**
