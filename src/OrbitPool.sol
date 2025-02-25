@@ -16,8 +16,9 @@ pragma solidity 0.8.20;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract OrbitPool is ERC20 {
+contract OrbitPool is ERC20, ReentrancyGuard {
     error OrbitPool__DeadlineHasPassed(uint64 deadline);
     error OrbitPool__MaxPoolTokenDepositTooHigh(
         uint256 maximumPoolTokensToDeposit,
@@ -125,6 +126,7 @@ contract OrbitPool is ERC20 {
         uint64 deadline
     )
         external
+        nonReentrant
         revertIfZero(wethToDeposit)
         revertIfDeadlinePassed(deadline)
         returns (uint256 liquidityTokensToMint)
@@ -224,6 +226,7 @@ contract OrbitPool is ERC20 {
         uint64 deadline
     )
         external
+        nonReentrant
         revertIfDeadlinePassed(deadline)
         revertIfZero(liquidityTokensToBurn)
         revertIfZero(minWethToWithdraw)
@@ -311,6 +314,7 @@ contract OrbitPool is ERC20 {
         uint64 deadline
     )
         public
+        nonReentrant
         revertIfZero(inputAmount)
         revertIfDeadlinePassed(deadline)
         returns (uint256 outputAmount)
@@ -351,6 +355,7 @@ contract OrbitPool is ERC20 {
         uint64 deadline
     )
         public
+        nonReentrant
         revertIfZero(outputAmount)
         revertIfDeadlinePassed(deadline)
         returns (uint256 inputAmount)
